@@ -1,0 +1,101 @@
+---
+title: "GFEL"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(dplyr)
+library(Rcpp)
+library(RcppArmadillo)
+library(RcppEigen)
+library(RSpectra)
+library(e1071)
+```
+
+
+# Creating weighted features
+
+```{r}
+
+MakeW <- function(w){
+   tw <- table(w)
+   w1 <- as.data.frame(table(w))
+   q <- w1$Freq/length(w)
+   w1$Freq <- q
+   return(w1)
+}
+```
+
+
+#C++ optimizations
+
+```{r}
+cppFunction('NumericMatrix SMM(CharacterMatrix A, NumericMatrix B){
+             NumericMatrix tot(A.nrow(), A.nrow());
+             NumericVector rs(A.ncol());
+              
+             for (int i = 0; i < A.nrow(); i++) {
+              for (int j = 0; j <= i; j++) {
+                for(int k = 0; k < A.ncol(); k++){
+                    if(A(i,k) != A(j,k)){
+                      rs(k) = 0;
+                    }
+                    else{
+                       rs(k) = B(k,atoi(A(i,k))-1);
+                    }
+                  }
+                tot(i,j) = +sum(rs);
+                tot(j,i) = tot(i,j);
+              }
+            }
+return tot/A.ncol();}')
+
+
+matrix_mult.cpp <- "
+// [[Rcpp::depends(RcppArmadillo, RcppEigen)]]
+
+#include <RcppArmadillo.h>
+#include <RcppEigen.h>
+
+// [[Rcpp::export]]
+SEXP eigenMapMatMult(const Eigen::Map<Eigen::MatrixXd> A, Eigen::Map<Eigen::MatrixXd> B){
+    Eigen::MatrixXd C = A * B;
+
+    return Rcpp::wrap(C);
+}
+"
+sourceCpp(code = matrix_mult.cpp)
+```
+
+# GFEL
+
+```{r, echo=TRUE}
+htlfcd <- function(source.data){
+  
+  x_hat <- apply(sapply(source.data, as.numeric),2, as.character)
+  
+  ww <- as.matrix(rbindlist(lapply(1:ncol(x_hat), function(i) data.frame(t(MakeW(x_hat[,i])$Freq))), fill = T))
+  ww[is.na(ww)] <- 0
+ 
+  S <- SMM(x_hat, ww)
+  
+  V <- suppressWarnings(eigs(S, nrow(source.data))$vectors)
+  
+  s_hat <- eigenMapMatMult(S, V)
+  
+  return(s_hat)}
+```
+
+```{r}
+
+car <- read.csv("https://s3-us-west-2.amazonaws.com/researchs/learn_w_cat_data/car.csv")
+
+h <- htlfcd(select(car,-Class))
+idx <- sample(1:nrow(h), nrow(h) * .8)
+table(predict(naiveBayes(y = factor(car$Class)[idx], x = h[idx,1:20]), h[-idx,1:20]), car$Class[-idx])
+```
