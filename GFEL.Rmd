@@ -91,6 +91,8 @@ htlfcd <- function(source.data){
   return(s_hat)}
 ```
 
+#Example using the first 20 columns of projected space
+
 ```{r}
 
 car <- read.csv("https://s3-us-west-2.amazonaws.com/researchs/learn_w_cat_data/car.csv")
