@@ -18,7 +18,7 @@ library(e1071)
 ```
 
 
-# Creating weighted features
+` Creating weighted features `
 
 ```{r}
 
@@ -32,7 +32,7 @@ MakeW <- function(w){
 ```
 
 
-#C++ optimizations
+` C++ optimizations `
 
 ```{r}
 cppFunction('NumericMatrix SMM(CharacterMatrix A, NumericMatrix B){
@@ -72,7 +72,7 @@ SEXP eigenMapMatMult(const Eigen::Map<Eigen::MatrixXd> A, Eigen::Map<Eigen::Matr
 sourceCpp(code = matrix_mult.cpp)
 ```
 
-# GFEL
+` GFEL `
 
 ```{r, echo=TRUE}
 htlfcd <- function(source.data){
@@ -91,7 +91,7 @@ htlfcd <- function(source.data){
   return(s_hat)}
 ```
 
-#Example using the first 20 columns of projected space
+` Example using the first 20 columns of projected space `
 
 ```{r}
 
