@@ -15,6 +15,7 @@ library(RcppArmadillo)
 library(RcppEigen)
 library(RSpectra)
 library(e1071)
+library(data.table)
 ```
 
 
