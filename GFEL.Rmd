@@ -23,12 +23,11 @@ library(data.table)
 
 ```{r}
 
-MakeW <- function(w){
-   tw <- table(w)
-   w1 <- as.data.frame(table(w))
-   q <- w1$Freq/length(w)
-   w1$Freq <- q
-   return(w1)
+freqTables <- function(x){
+  v <- table(x)/length(x)
+  w <- data.frame(t(as.numeric(v)))
+  names(w) <- names(v)
+  return (w)
 }
 ```
 
@@ -80,10 +79,12 @@ htlfcd <- function(source.data){
   
   x_hat <- apply(sapply(source.data, as.numeric),2, as.character)
   
-  ww <- as.matrix(rbindlist(lapply(1:ncol(x_hat), function(i) data.frame(t(MakeW(x_hat[,i])$Freq))), fill = T))
+  ww <- as.matrix(rbindlist(lapply(1:ncol(x_hat), function(i) freqTables(x_hat[,i])), fill = T))
   ww[is.na(ww)] <- 0
- 
-  S <- SMM(x_hat, ww)
+  ww_ <- as.data.frame(ww)
+  ww_ <- ww_[sort(names(ww_))]
+  
+  S <- SMM(x_hat, as.matrix(ww_))
   
   V <- suppressWarnings(eigs(S, nrow(source.data))$vectors)
   
