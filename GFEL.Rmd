@@ -22,7 +22,6 @@ library(data.table)
 ` Creating weighted features `
 
 ```{r}
-
 freqTables <- function(x){
   v <- table(x)/length(x)
   w <- data.frame(t(as.numeric(v)))
